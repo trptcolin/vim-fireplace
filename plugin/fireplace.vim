@@ -191,11 +191,12 @@ function! s:repl.preload(lib) dict abort
     let self.requires[a:lib] = 0
     let clone = s:conn_try(self.connection, 'clone')
     try
-      let result = clone.eval('(ns '.self.user_ns().' (:require '.a:lib.reload.'))', {'ns': self.user_ns()})
+      let result = clone.eval("(#'clojure.core/load-one \"" . a:lib . "\" true true)", {'ns': self.user_ns()})
+      let ns_exists = clone.eval("(the-ns '" . a:lib . ")", {'ns': self.user_ns()})
     finally
       call clone.close()
     endtry
-    let self.requires[a:lib] = !has_key(result, 'ex')
+    let self.requires[a:lib] = !has_key(ns_exists, 'ex')
     if has_key(result, 'ex')
       return result
     endif
